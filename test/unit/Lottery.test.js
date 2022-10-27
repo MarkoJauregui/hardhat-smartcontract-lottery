@@ -90,4 +90,30 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
           assert(upkeepNeeded)
         })
       })
+
+      describe("performUpkeep", () => {
+        it("can only run if checkUpkeep is true", async () => {
+          await lottery.enterLottery({ value: lotteryEntranceFee })
+          await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+          await network.provider.send("evm_mine", [])
+          const tx = await lottery.performUpkeep([])
+          assert(tx)
+        })
+
+        it("reverts when checkUpkeep is false", async () => {
+          await expect(lottery.performUpkeep([])).to.be.revertedWith("Lottery__UpKeepNotNeeded")
+        })
+
+        it("updates the lottery state, emits and events, calls the vrf coordinator", async () => {
+          await lottery.enterLottery({ value: lotteryEntranceFee })
+          await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+          await network.provider.send("evm_mine", [])
+          const txResponse = await lottery.performUpkeep([])
+          const txReceipt = await txResponse.wait(1)
+          const requestId = txReceipt.events[1].args.requestId
+          const lotteryState = await lottery.getLotteryState()
+          assert(requestId.toNumber() > 0)
+          assert.equal(lotteryState.toString(), "1")
+        })
+      })
     })
