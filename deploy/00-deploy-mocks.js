@@ -9,7 +9,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const chainId = network.config.chainId
   const args = [BASE_FEE, GAS_PRICE_LINK]
 
-  if (developmentChains.includes(network.name)) {
+  if (chainId == 31337) {
     console.log("Local network detected! Deploying mocks...")
     // Deploy mock vrfcoodrinator...
     await deploy("VRFCoordinatorV2Mock", {
